@@ -13,11 +13,13 @@ import { Chess, type Square } from "chess.js";
 import { useGameReview } from "@/lib/hooks/useGameReview";
 import { PgnForm } from "@/components/review/PgnForm";
 import { ReviewBoard } from "@/components/review/ReviewBoard";
+import { EvalBar } from "@/components/review/EvalBar";
 import { ReviewProgress } from "@/components/review/ReviewProgress";
 import { AccuracyCards } from "@/components/review/AccuracyCards";
 import { MoveList } from "@/components/review/MoveList";
 import { ClassificationLegend } from "@/components/review/ClassificationLegend";
 import { ReviewNavigation } from "@/components/review/ReviewNavigation";
+import { PositionAnalysisPanel } from "@/components/review/PositionAnalysisPanel";
 
 export default function ReviewPage() {
   const [pgn, setPgn] = useState("");
@@ -25,7 +27,8 @@ export default function ReviewPage() {
   const [navIndex, setNavIndex] = useState(0);
   const [started, setStarted] = useState(false);
 
-  const { report, loading, progress, total, runReview, reset } = useGameReview();
+  const { report, loading, progress, total, analysisPass, runReview, reset } =
+    useGameReview();
 
   const handleAnalyse = useCallback(async () => {
     if (!pgn.trim()) return;
@@ -60,6 +63,14 @@ export default function ReviewPage() {
   const positions = report?.positions ?? [];
   const currentClassification =
     navIndex > 0 ? positions[navIndex]?.classification : undefined;
+  const currentPositionAnalysis =
+    navIndex > 0
+      ? positions[navIndex]?.positionAnalysis
+      : positions[0]?.positionAnalysis;
+  const currentEval =
+    positions.length > 0
+      ? positions[Math.min(navIndex, positions.length - 1)]?.topLines?.[0]?.evaluation
+      : undefined;
 
   const handleResetBtn = () => {
     reset();
@@ -71,16 +82,28 @@ export default function ReviewPage() {
 
   return (
     <div className="min-h-screen bg-black text-white selection:bg-white selection:text-black">
-      <header className="max-w-6xl mx-auto px-6 py-6 flex items-center justify-between">
-        <span className="font-display text-2xl font-bold tracking-tighter">
-          Aura<span className="text-white/40">Chess</span>
-        </span>
-        <span className="text-[10px] uppercase tracking-widest text-white/40 border border-white/10 rounded-full px-3 py-1">
-          100% Free · Local Engine
-        </span>
+      <header className="sticky top-0 z-40 border-b border-white/[0.06] bg-black/60 backdrop-blur-md">
+        <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-6">
+          <span className="font-display text-xl font-bold tracking-tight">
+            Aura<span className="text-white/40">Chess</span>
+          </span>
+          <div className="flex items-center gap-4">
+            {started && (
+              <button
+                onClick={handleResetBtn}
+                className="text-[11px] font-medium uppercase tracking-[0.16em] text-white/40 transition-colors hover:text-white"
+              >
+                New review
+              </button>
+            )}
+            <span className="rounded-full border border-white/10 px-3 py-1 text-[10px] uppercase tracking-widest text-white/40">
+              Local engine
+            </span>
+          </div>
+        </div>
       </header>
 
-      <main className="max-w-6xl mx-auto px-6 pb-20">
+      <main className="mx-auto max-w-6xl px-6 pb-24">
         {!started ? (
           <PgnForm
             value={pgn}
@@ -89,28 +112,42 @@ export default function ReviewPage() {
             loading={loading}
           />
         ) : (
-          <div className="pt-6">
-            {loading && <ReviewProgress progress={progress} total={total} />}
+          <div className="pt-8">
+            {loading && (
+              <ReviewProgress
+                progress={progress}
+                total={total}
+                analysisPass={analysisPass}
+              />
+            )}
 
-            <div className="grid grid-cols-12 gap-6 items-start">
+            <div className="grid grid-cols-1 gap-5 lg:grid-cols-12 lg:gap-7">
               {/* Board + navigation */}
-              <div className="col-span-12 md:col-span-6">
-                <ReviewBoard
-                  fen={boardState.fen}
-                  lastMove={boardState.lastMove}
-                  classification={currentClassification}
-                />
+              <div className="lg:col-span-6">
+                <div className="flex items-stretch gap-2.5">
+                  <EvalBar evaluation={currentEval} />
+                  <div className="min-w-0 flex-1">
+                    <ReviewBoard
+                      fen={boardState.fen}
+                      lastMove={boardState.lastMove}
+                      classification={currentClassification}
+                      positionAnalysis={currentPositionAnalysis}
+                    />
+                  </div>
+                </div>
                 <ReviewNavigation
                   hasPrevious={navIndex > 0}
                   hasNext={navIndex < moves.length}
+                  navIndex={navIndex}
+                  total={moves.length}
+                  classification={currentClassification}
                   onPrevious={() => setNavIndex((n) => Math.max(0, n - 1))}
                   onNext={() => setNavIndex((n) => Math.min(moves.length, n + 1))}
-                  onNew={handleResetBtn}
                 />
               </div>
 
               {/* Right panel */}
-              <div className="col-span-12 md:col-span-6">
+              <div className="flex flex-col gap-3.5 lg:col-span-6">
                 {report && <AccuracyCards report={report} />}
                 <MoveList
                   moves={moves}
@@ -118,6 +155,7 @@ export default function ReviewPage() {
                   navIndex={navIndex}
                   onSelectMove={setNavIndex}
                 />
+                <PositionAnalysisPanel positionAnalysis={currentPositionAnalysis} />
                 <ClassificationLegend />
               </div>
             </div>

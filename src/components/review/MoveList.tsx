@@ -2,8 +2,8 @@
  * Scrollable move-by-move list.
  *
  * Renders the game as numbered pairs; each ply carries a classification chip
- * (colored dot) and is clickable to navigate the board (`onSelectMove` gets the
- * half-move index). Shows a placeholder while positions are still pending.
+ * (tiny glowing dot) and is clickable to navigate the board (`onSelectMove`
+ * gets the half-move index). Shows a placeholder while positions are pending.
  */
 "use client";
 
@@ -17,15 +17,14 @@ interface MoveListProps {
   onSelectMove: (index: number) => void;
 }
 
-/** Colored dot summarizing a move's classification (same hue as badge/square). */
-function chip(cls?: string) {
+/** Tiny glowing dot summarizing a move's classification. */
+function MoveGlyph({ cls }: { cls?: string }) {
   if (!cls) return null;
-  const vis = classificationVisuals[cls];
+  const color = classificationVisuals[cls]?.badgeBg ?? "#666";
   return (
     <span
-      className="inline-flex items-center justify-center w-3.5 h-3.5 rounded-full shrink-0"
-      style={{ backgroundColor: vis?.badgeBg ?? "#666" }}
-      title={cls}
+      className="h-[5px] w-[5px] shrink-0 rounded-[2px]"
+      style={{ backgroundColor: color, boxShadow: `0 0 6px ${color}55` }}
     />
   );
 }
@@ -58,13 +57,20 @@ export function MoveList({ moves, positions, navIndex, onSelectMove }: MoveListP
   }
 
   return (
-    <div className="rounded-xl border border-white/[0.06] overflow-hidden max-h-[480px] flex flex-col">
-      <div className="px-4 py-2.5 border-b border-white/[0.04] text-[10px] font-semibold uppercase tracking-[0.2em] text-white/30">
-        Moves
+    <div className="flex max-h-[420px] flex-col overflow-hidden rounded-2xl border border-white/[0.06] bg-white/[0.02]">
+      <div className="flex items-center justify-between border-b border-white/[0.04] px-4 py-2.5">
+        <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-white/30">
+          Moves
+        </span>
+        <span className="text-[10px] tabular-nums text-white/30">
+          {Math.ceil(moves.length / 2)} moves
+        </span>
       </div>
-      <div className="flex-1 overflow-y-auto p-2 space-y-0.5 custom-scrollbar">
+      <div className="flex-1 space-y-px overflow-y-auto p-1.5 custom-scrollbar">
         {movePairs.length === 0 ? (
-          <div className="text-white/20 text-sm text-center py-10">Analysing…</div>
+          <div className="py-10 text-center text-sm font-light text-white/25">
+            Analysing…
+          </div>
         ) : (
           movePairs.map((pair) => {
             const active =
@@ -72,35 +78,35 @@ export function MoveList({ moves, positions, navIndex, onSelectMove }: MoveListP
             return (
               <div
                 key={pair.num}
-                className="grid grid-cols-12 items-center px-2 py-1.5 rounded-lg"
-                style={{
-                  background: active ? "rgba(255,255,255,0.04)" : "transparent",
-                }}
+                className={`grid grid-cols-[2.75rem_1fr_1fr] items-center rounded-lg ${
+                  active ? "bg-white/[0.05]" : "transition-colors hover:bg-white/[0.02]"
+                }`}
               >
-                <div className="col-span-2 text-[10px] text-white/30">
-                  {pair.num}
-                </div>
+                <span className="pl-3 text-[10px] tabular-nums text-white/25">
+                  {pair.num}.
+                </span>
                 <button
                   onClick={() => onSelectMove(pair.whiteIdx + 1)}
-                  className={`col-span-4 text-[13px] text-left flex items-center gap-1.5 ${
+                  className={`flex items-center gap-2 rounded-md px-1.5 py-1.5 text-left text-[12.5px] transition-colors ${
                     navIndex === pair.whiteIdx + 1
-                      ? "text-amber-400"
-                      : "text-white/60"
+                      ? "font-medium text-white"
+                      : "text-white/50 hover:text-white/80"
                   }`}
                 >
-                  {pair.white} {chip(pair.whiteClass)}
+                  <MoveGlyph cls={pair.whiteClass} />
+                  {pair.white}
                 </button>
                 <button
                   onClick={() => pair.black && onSelectMove(pair.blackIdx + 1)}
-                  className={`col-span-4 text-[13px] text-left flex items-center gap-1.5 ${
+                  className={`flex items-center gap-2 rounded-md px-1.5 py-1.5 text-left text-[12.5px] transition-colors ${
                     navIndex === pair.blackIdx + 1
-                      ? "text-amber-400"
-                      : "text-white/40"
+                      ? "font-medium text-white"
+                      : "text-white/40 hover:text-white/75"
                   }`}
                 >
-                  {pair.black || "-"} {chip(pair.blackClass)}
+                  <MoveGlyph cls={pair.blackClass} />
+                  {pair.black || "—"}
                 </button>
-                <div className="col-span-2" />
               </div>
             );
           })

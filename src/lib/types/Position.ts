@@ -5,6 +5,7 @@
  */
 import { Classification } from "./Classification";
 import { EngineLine, Evaluation } from "./Engine";
+import type { PositionAnalysis } from "@/lib/chess/engine-rs/types";
 
 interface Move {
     san: string,
@@ -22,5 +23,6 @@ export interface EvaluatedPosition extends Position {
     cutoffEvaluation?: Evaluation,
     classification?: Classification,
     opening?: string,
-    worker: string
+    worker: string,
+    positionAnalysis?: PositionAnalysis
 }

@@ -24,6 +24,7 @@ import type Report from "@/lib/types/Report";
 import type { EvaluatedPosition } from "@/lib/types/Position";
 import { Classification } from "@/lib/types/Classification";
 import { toast } from "react-toastify";
+import { RustAnalyzer } from "@/lib/chess/engine-rs/analyzer";
 
 type EvalResponse = EvalResult;
 
@@ -160,6 +161,7 @@ export function useGameReview(): UseGameReviewReturn {
       }
 
       positionsRef.current = [...positions];
+      await enrichWithRustAnalysis(positionsRef.current);
       const result = await analyse([...positions]);
       setReport(result);
 
@@ -215,6 +217,8 @@ export function useGameReview(): UseGameReviewReturn {
 
         setCompletedMoves(i + 1);
       }
+
+      await enrichWithRustAnalysis(updated);
 
       const oldReport = positionsRef.current.map(p => p.classification);
       const newResult = await analyse(updated);
@@ -281,6 +285,8 @@ export function useGameReview(): UseGameReviewReturn {
         setCompletedMoves(i + 1);
       }
 
+      await enrichWithRustAnalysis(updated);
+
       const oldReport = positionsRef.current.map(p => p.classification);
       const newResult = await analyse(updated);
 
@@ -341,6 +347,8 @@ export function useGameReview(): UseGameReviewReturn {
         }
       }
 
+      await enrichWithRustAnalysis(updated);
+
       const updatedReport = await analyse(updated);
       positionsRef.current = updated;
       setReport(updatedReport);
@@ -376,6 +384,23 @@ function countPieces(fen: string): number {
     if ((ch >= "a" && ch <= "z") || (ch >= "A" && ch <= "Z")) count++;
   }
   return count;
+}
+
+// Enrich positions with Rust analyzer data (motifs, hanging pieces, king
+// safety, static evaluation) when the WASM module is available. Best-effort:
+// if the module failed to load, positions pass through untouched.
+async function enrichWithRustAnalysis(positions: EvaluatedPosition[]): Promise<void> {
+  const analyzer = RustAnalyzer.getInstance();
+  const ready = await analyzer.initialize();
+  if (!ready) return;
+
+  for (const pos of positions) {
+    try {
+      pos.positionAnalysis = analyzer.analyzePosition(pos.fen);
+    } catch {
+      // Best-effort — a single position failure shouldn't break the review.
+    }
+  }
 }
 
 async function evaluateFenToDepth(

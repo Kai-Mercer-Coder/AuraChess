@@ -46,6 +46,15 @@ function accuracyColor(acc: number) {
   return "text-red-500";
 }
 
+/** Solid hex fill for an accuracy progress bar (same thresholds as above). */
+function accuracyBarColor(acc: number) {
+  if (acc >= 90) return "#2dd4bf";
+  if (acc >= 75) return "#a3e635";
+  if (acc >= 60) return "#eab308";
+  if (acc >= 40) return "#f97316";
+  return "#ef4444";
+}
+
 /**
  * Per-classification styling: `bg` is a translucent tint for squares, `badgeBg`
  * is the solid chip/badge color, `icon` is an optional inline glyph (used on
@@ -68,4 +77,4 @@ const classificationVisuals: Record<string, { bg: string; badgeBg: string; icon:
   forced: { bg: "rgba(255,255,255,0.18)", badgeBg: "#ffffff", icon: "" },
 };
 
-export { accuracyColor, reviewCategories, classificationVisuals };
+export { accuracyColor, accuracyBarColor, reviewCategories, classificationVisuals };

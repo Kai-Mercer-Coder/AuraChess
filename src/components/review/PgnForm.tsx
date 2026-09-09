@@ -15,33 +15,49 @@ interface PgnFormProps {
 
 export function PgnForm({ value, onChange, onAnalyse, loading }: PgnFormProps) {
   return (
-    <div className="max-w-lg mx-auto pt-16">
-      <h1 className="font-display text-4xl font-bold tracking-tighter text-white">
+    <div className="relative mx-auto max-w-xl px-6 pb-16 pt-24 text-center">
+      {/* Soft aura behind the hero. */}
+      <div className="pointer-events-none absolute -top-16 left-1/2 h-80 w-80 -translate-x-1/2 rounded-full bg-white/[0.05] blur-3xl" />
+
+      <p className="mb-5 text-[11px] font-semibold uppercase tracking-[0.35em] text-white/30">
+        AuraChess · Game review
+      </p>
+      <h1 className="font-display text-5xl font-medium tracking-tight text-white sm:text-6xl">
         Review your game.
       </h1>
-      <p className="text-white/50 font-light mt-3">
-        Paste any PGN and get every move classified — Brilliant, Best,
-        Inaccuracy, Mistake, Blunder — plus accuracy scores. Runs entirely in
-        your browser.
+      <p className="mx-auto mt-4 max-w-md text-[15px] font-light leading-relaxed text-white/45">
+        Paste any PGN and get every move classified — Brilliant to Blunder — with
+        positional intelligence. All in your browser.
       </p>
-      <div className="mt-8">
-        <label className="block text-[11px] font-bold uppercase tracking-widest text-white/50">
-          Paste your PGN
+
+      <div className="mt-10 rounded-2xl border border-white/[0.08] bg-white/[0.02] p-5 text-left backdrop-blur-sm fade-up">
+        <label className="block pb-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-white/30">
+          Paste PGN
         </label>
         <textarea
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          placeholder={"1. e4 e5 2. Nf3 Nc6 3. Bb5 a6 ..."}
-          rows={10}
-          className="mt-2 w-full resize-none rounded-xl bg-white/[0.03] border border-white/10 p-4 text-sm text-white/80 placeholder:text-white/20 font-mono focus:outline-none focus:border-white/30"
+          placeholder="1. e4 e5 2. Nf3 Nc6 3. Bb5 a6 …"
+          rows={9}
+          className="w-full resize-none rounded-xl border border-white/[0.06] bg-black/40 p-4 font-mono text-[13px] leading-relaxed text-white/80 placeholder:text-white/20 focus:border-white/25 focus:outline-none"
         />
         <button
           onClick={onAnalyse}
           disabled={!value.trim() || loading}
-          className="mt-4 w-full py-3 rounded-full bg-white text-black font-black text-xs uppercase tracking-widest hover:bg-neutral-200 transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
+          className="mt-4 flex w-full items-center justify-center gap-2 rounded-full bg-white py-3 text-[11px] font-bold uppercase tracking-[0.2em] text-black transition-all hover:bg-neutral-200 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-30"
         >
-          {loading ? "Analysing…" : "Analyse Free"}
+          {loading ? (
+            <>
+              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-black" />
+              Analysing…
+            </>
+          ) : (
+            "Analyse"
+          )}
         </button>
+        <p className="pt-3 text-center text-[10px] font-light tracking-wide text-white/25">
+          Free · No account · Runs on local Stockfish
+        </p>
       </div>
     </div>
   );

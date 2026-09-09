@@ -11,17 +11,17 @@ import {
 
 export function ClassificationLegend() {
   return (
-    <div className="mt-4 flex flex-wrap gap-2">
+    <div className="flex flex-wrap items-center justify-center gap-x-3.5 gap-y-1.5 pb-1">
       {reviewCategories.slice(0, 10).map((c) => {
         const vis = classificationVisuals[c.key];
         return (
           <span
             key={c.key}
-            className="inline-flex items-center gap-1.5 text-[10px] text-white/40"
+            className="inline-flex items-center gap-1.5 text-[9.5px] font-medium uppercase tracking-[0.14em] text-white/30"
           >
             <span
-              className="w-2.5 h-2.5 rounded-full"
-              style={{ backgroundColor: vis?.badgeBg }}
+              className="h-1.5 w-1.5 rounded-full"
+              style={{ backgroundColor: vis?.badgeBg, opacity: 0.85 }}
             />
             {c.label}
           </span>

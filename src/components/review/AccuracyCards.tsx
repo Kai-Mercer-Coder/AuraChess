@@ -1,34 +1,70 @@
 /**
- * Per-side accuracy cards shown once a Report is ready.
- * Color is derived from the accuracy via `accuracyColor`.
+ * Session summary card shown once a Report is ready.
+ * Opening name (when known) plus per-side accuracy as thin progress bars.
  */
 "use client";
 
 import type Report from "@/lib/types/Report";
-import { accuracyColor } from "@/components/review/classificationVisuals";
+import {
+  accuracyBarColor,
+  accuracyColor,
+} from "@/components/review/classificationVisuals";
 
 interface AccuracyCardsProps {
   report: Report;
 }
 
-export function AccuracyCards({ report }: AccuracyCardsProps) {
+function PlayerMark({ side }: { side: "white" | "black" }) {
   return (
-    <div className="grid grid-cols-2 gap-4 mb-4">
-      <div className="rounded-xl p-4 bg-white/[0.04] border border-white/[0.04]">
-        <div className="text-[10px] uppercase tracking-wider text-white/30">
-          White
-        </div>
-        <div className={`text-2xl font-bold ${accuracyColor(report.accuracies.white)}`}>
-          {report.accuracies.white.toFixed(1)}%
-        </div>
+    <span
+      className={`inline-block h-3.5 w-3.5 shrink-0 rounded-full ${
+        side === "white"
+          ? "bg-[#f5f5f5]"
+          : "bg-neutral-900 ring-1 ring-white/40"
+      }`}
+    />
+  );
+}
+
+function PlayerRow({ side, accuracy }: { side: "white" | "black"; accuracy: number }) {
+  return (
+    <div>
+      <div className="flex items-center justify-between text-[12px]">
+        <span className="flex items-center gap-2 text-white/60">
+          <PlayerMark side={side} />
+          <span className="capitalize">{side}</span>
+        </span>
+        <span className={`font-semibold tabular-nums ${accuracyColor(accuracy)}`}>
+          {accuracy.toFixed(1)}%
+        </span>
       </div>
-      <div className="rounded-xl p-4 bg-white/[0.04] border border-white/[0.04]">
-        <div className="text-[10px] uppercase tracking-wider text-white/30">
-          Black
-        </div>
-        <div className={`text-2xl font-bold ${accuracyColor(report.accuracies.black)}`}>
-          {report.accuracies.black.toFixed(1)}%
-        </div>
+      <div className="mt-1.5 h-1 overflow-hidden rounded-full bg-white/[0.06]">
+        <div
+          className="h-full rounded-full transition-all duration-500"
+          style={{ width: `${accuracy}%`, backgroundColor: accuracyBarColor(accuracy) }}
+        />
+      </div>
+    </div>
+  );
+}
+
+export function AccuracyCards({ report }: AccuracyCardsProps) {
+  const opening = report.positions.find((p) => p.opening)?.opening;
+  return (
+    <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4 fade-up">
+      <div className="mb-3.5 flex items-baseline justify-between gap-4">
+        <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-white/30">
+          This game
+        </span>
+        {opening && (
+          <span className="truncate text-[11px] font-light text-white/40" title={opening}>
+            {opening}
+          </span>
+        )}
+      </div>
+      <div className="space-y-3">
+        <PlayerRow side="white" accuracy={report.accuracies.white} />
+        <PlayerRow side="black" accuracy={report.accuracies.black} />
       </div>
     </div>
   );
