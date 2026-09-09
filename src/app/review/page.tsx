@@ -27,7 +27,7 @@ export default function ReviewPage() {
   const [navIndex, setNavIndex] = useState(0);
   const [started, setStarted] = useState(false);
 
-  const { report, loading, progress, total, analysisPass, runReview, reset } =
+  const { report, loading, progress, total, analysisPass, completedMoves, runReview, reset } =
     useGameReview();
 
   const handleAnalyse = useCallback(async () => {
@@ -154,6 +154,8 @@ export default function ReviewPage() {
                   positions={positions}
                   navIndex={navIndex}
                   onSelectMove={setNavIndex}
+                  analysing={loading}
+                  analysedCount={completedMoves}
                 />
                 <PositionAnalysisPanel positionAnalysis={currentPositionAnalysis} />
                 <ClassificationLegend />

@@ -15,10 +15,30 @@ interface MoveListProps {
   positions: EvaluatedPosition[];
   navIndex: number;
   onSelectMove: (index: number) => void;
+  analysing?: boolean;
+  analysedCount?: number;
 }
 
-/** Tiny glowing dot summarizing a move's classification. */
-function MoveGlyph({ cls }: { cls?: string }) {
+type GlyphState = "pending" | "done" | "active";
+
+/**
+ * Per-ply glyph: a soft green orb when analysis is in progress (the "active"
+ * one pulses as it's being computed), otherwise the classification dot.
+ */
+function MoveGlyph({ cls, state }: { cls?: string; state?: GlyphState }) {
+  if (state === "done" || state === "active") {
+    return (
+      <span
+        className={`h-[5px] w-[5px] shrink-0 rounded-full ${
+          state === "active" ? "animate-pulse" : ""
+        }`}
+        style={{
+          backgroundColor: "#34d399",
+          boxShadow: "0 0 6px rgba(52, 211, 153, 0.55)",
+        }}
+      />
+    );
+  }
   if (!cls) return null;
   const color = classificationVisuals[cls]?.badgeBg ?? "#666";
   return (
@@ -29,7 +49,21 @@ function MoveGlyph({ cls }: { cls?: string }) {
   );
 }
 
-export function MoveList({ moves, positions, navIndex, onSelectMove }: MoveListProps) {
+export function MoveList({
+  moves,
+  positions,
+  navIndex,
+  onSelectMove,
+  analysing,
+  analysedCount,
+}: MoveListProps) {
+  // The move at ply index `i` is finished once the position after it has been
+  // evaluated: analysedCount (positions evaluated, incl. the start) > i + 1.
+  const plyState = (index: number): GlyphState | undefined => {
+    if (!analysing || analysedCount == null) return undefined;
+    if (index === analysedCount - 2) return "active";
+    return analysedCount > index + 1 ? "done" : undefined;
+  };
   // Pile up the moves into numbered white/black pairs, carrying each side's
   // classification. Classification for move i lives on positions[i] (which is
   // the position AFTER that move — see analyse.ts).
@@ -93,7 +127,7 @@ export function MoveList({ moves, positions, navIndex, onSelectMove }: MoveListP
                       : "text-white/50 hover:text-white/80"
                   }`}
                 >
-                  <MoveGlyph cls={pair.whiteClass} />
+                  <MoveGlyph cls={pair.whiteClass} state={plyState(pair.whiteIdx)} />
                   {pair.white}
                 </button>
                 <button
@@ -104,7 +138,7 @@ export function MoveList({ moves, positions, navIndex, onSelectMove }: MoveListP
                       : "text-white/40 hover:text-white/75"
                   }`}
                 >
-                  <MoveGlyph cls={pair.blackClass} />
+                  <MoveGlyph cls={pair.blackClass} state={plyState(pair.blackIdx)} />
                   {pair.black || "—"}
                 </button>
               </div>
