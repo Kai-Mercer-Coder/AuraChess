@@ -26,6 +26,8 @@ interface ReviewBoardProps {
   lastMove: { from: Square; to: Square } | null;
   classification?: string;
   positionAnalysis?: PositionAnalysis | null;
+  /** Square → tint override from the heatmap panel (takes precedence). */
+  heatmap?: Record<string, string> | null;
 }
 
 /** Hex → `rgba()` string so tints can reuse badge colors at reduced alpha. */
@@ -51,7 +53,7 @@ const badgeImages: Record<string, string> = {
   onlyMove: "/badges/onlyMove.png",
 };
 
-export function ReviewBoard({ fen, lastMove, classification, positionAnalysis }: ReviewBoardProps) {
+export function ReviewBoard({ fen, lastMove, classification, positionAnalysis, heatmap }: ReviewBoardProps) {
   const badgeSquare = lastMove && classification ? lastMove.to : null;
 
   // Hanging squares discovered by the Rust analyzer → red inset ring.
@@ -112,7 +114,8 @@ export function ReviewBoard({ fen, lastMove, classification, positionAnalysis }:
         width: "100%",
         height: "100%",
         position: "relative",
-        ...lastMoveSquareStyles[square],
+        // Heatmap tint wins over the last-move tint while the panel is open.
+        ...(heatmap?.[square] ? { backgroundColor: heatmap[square] } : lastMoveSquareStyles[square]),
         boxShadow: hangingSquares.includes(square as Square)
           ? "inset 0 0 0 2px rgba(239, 68, 68, 0.55)"
           : undefined,

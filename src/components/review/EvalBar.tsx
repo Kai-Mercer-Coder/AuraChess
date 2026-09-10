@@ -6,21 +6,21 @@
 "use client";
 
 import type { Evaluation } from "@/lib/types/Engine";
+import { winPercent } from "@/lib/chess/classification";
 
 interface EvalBarProps {
   evaluation?: Evaluation;
 }
 
-/** Evaluation → White win-share percentage (0-100). */
+/**
+ * Evaluation → White win-share percentage (0-100), using the same sigmoid
+ * win-probability curve as move classification so the bar and the labels
+ * always agree. Mate scores collapse to 0/100 (neutral on mate-0).
+ */
 function evalToPercent(evaluation?: Evaluation): number {
   if (!evaluation) return 50;
-  if (evaluation.type === "mate") {
-    if (evaluation.value > 0) return 100;
-    if (evaluation.value < 0) return 0;
-    return 50;
-  }
-  const cp = Math.max(-400, Math.min(400, evaluation.value));
-  return 50 + 25 * Math.tanh(cp / 200);
+  if (evaluation.type === "mate" && evaluation.value === 0) return 50;
+  return 100 * winPercent(evaluation.value, evaluation.type === "mate");
 }
 
 /** Compact label: "+1.24", "−0.75", or "M4". */

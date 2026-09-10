@@ -24,5 +24,7 @@ export interface EvaluatedPosition extends Position {
     classification?: Classification,
     opening?: string,
     worker: string,
+    /** Win probability lost (0..1) by the move leading to this position. */
+    wpl?: number,
     positionAnalysis?: PositionAnalysis
 }

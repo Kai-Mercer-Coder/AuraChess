@@ -35,5 +35,4 @@ export type EvalResult = {
     bestmove: string;
     san: string;
     continuationArr: string[];
-    winChance: number;
 };

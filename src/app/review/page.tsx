@@ -17,17 +17,23 @@ import { EvalBar } from "@/components/review/EvalBar";
 import { ReviewProgress } from "@/components/review/ReviewProgress";
 import { AccuracyCards } from "@/components/review/AccuracyCards";
 import { MoveList } from "@/components/review/MoveList";
-import { ClassificationLegend } from "@/components/review/ClassificationLegend";
 import { ReviewNavigation } from "@/components/review/ReviewNavigation";
 import { PositionAnalysisPanel } from "@/components/review/PositionAnalysisPanel";
+import { HeatmapPanel } from "@/components/review/HeatmapPanel";
+import {
+  computeHeatmap,
+  buildHeatmapOverlay,
+  type HeatmapMode,
+} from "@/lib/chess/heatmap";
 
 export default function ReviewPage() {
   const [pgn, setPgn] = useState("");
   const [moves, setMoves] = useState<string[]>([]);
   const [navIndex, setNavIndex] = useState(0);
   const [started, setStarted] = useState(false);
-  // Accordion: at most one of the two side panels is open at a time.
-  const [openPanel, setOpenPanel] = useState<"moves" | "analysis" | null>("moves");
+  // Accordion: at most one of the side panels is open at a time.
+  const [openPanel, setOpenPanel] = useState<"moves" | "analysis" | "heatmap" | null>("moves");
+  const [heatmapMode, setHeatmapMode] = useState<HeatmapMode>("all");
 
   const { report, loading, progress, total, analysisPass, completedMoves, runReview, reset } =
     useGameReview();
@@ -73,6 +79,17 @@ export default function ReviewPage() {
     positions.length > 0
       ? positions[Math.min(navIndex, positions.length - 1)]?.topLines?.[0]?.evaluation
       : undefined;
+
+  // Heatmap reachability for the displayed position; the board overlay is
+  // only live while the heatmap panel is open.
+  const heatmapData = useMemo(
+    () => computeHeatmap(boardState.fen),
+    [boardState.fen],
+  );
+  const heatmapOverlay = useMemo(
+    () => (openPanel === "heatmap" ? buildHeatmapOverlay(heatmapData, heatmapMode) : null),
+    [openPanel, heatmapData, heatmapMode],
+  );
 
   const handleResetBtn = () => {
     reset();
@@ -134,6 +151,7 @@ export default function ReviewPage() {
                       lastMove={boardState.lastMove}
                       classification={currentClassification}
                       positionAnalysis={currentPositionAnalysis}
+                      heatmap={heatmapOverlay}
                     />
                   </div>
                 </div>
@@ -166,7 +184,13 @@ export default function ReviewPage() {
                   open={openPanel === "analysis"}
                   onToggle={() => setOpenPanel((p) => (p === "analysis" ? null : "analysis"))}
                 />
-                <ClassificationLegend />
+                <HeatmapPanel
+                  data={heatmapData}
+                  mode={heatmapMode}
+                  onModeChange={setHeatmapMode}
+                  open={openPanel === "heatmap"}
+                  onToggle={() => setOpenPanel((p) => (p === "heatmap" ? null : "heatmap"))}
+                />
               </div>
             </div>
           </div>

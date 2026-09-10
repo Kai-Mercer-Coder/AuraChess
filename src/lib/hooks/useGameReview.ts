@@ -412,7 +412,6 @@ async function evaluateFenToDepth(
         bestmove: tablebase.bestmove,
         san: "",
         continuationArr: tablebase.continuationArr,
-        winChance: tablebase.winChance,
       };
     }
   }
@@ -423,14 +422,12 @@ async function evaluateFenToDepth(
   const evalEngine = engine ?? new LocalStockfishEvalEngine();
   try {
     const result = await evalEngine.evaluateToDepth(fen, depth);
-    const evalCp = Math.round(result.eval * 100);
     return {
       eval: result.eval,
       mate: result.mate,
       bestmove: result.bestmove,
       san: "",
       continuationArr: result.pv.slice(1),
-      winChance: 50 + (evalCp / 200),
     };
   } finally {
     if (ownsEngine) evalEngine.terminate();

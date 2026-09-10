@@ -81,6 +81,10 @@ export async function analyse(positions: EvaluatedPosition[]): Promise<Report> {
       moveColour,
     );
 
+    // Persist per-move WPL for the continuous accuracy curve below. Stored
+    // before any `continue` so forced moves count with their (near-zero) WPL.
+    position.wpl = wpl;
+
     if (!secondTopMove) {
       const legalMoves = board.moves();
       if (legalMoves.length <= 1) {
@@ -369,11 +373,13 @@ export async function analyse(positions: EvaluatedPosition[]): Promise<Report> {
   }
 
   // --- Accuracy + classification counts ---------------------------
-  // Accuracy = mean of per-move classification values (0..1) scaled to 100.
-  // A move only counts toward `maximum` when it has a known classification.
+  // Accuracy uses the chess.com-style continuous curve over average win
+  // probability lost (WPL in win-% points), so similar play across games
+  // scores continuously instead of jumping per label. A move only counts
+  // toward `maximum` when it has a known classification.
   let accuracies = {
-    white: { current: 0, maximum: 0 },
-    black: { current: 0, maximum: 0 },
+    white: { current: 0, maximum: 0, wplSum: 0, wplCount: 0 },
+    black: { current: 0, maximum: 0, wplSum: 0, wplCount: 0 },
   };
   const classifications = {
     white: {
@@ -418,22 +424,44 @@ export async function analyse(positions: EvaluatedPosition[]): Promise<Report> {
       classificationValues[cls as keyof typeof classificationValues];
     accuracies[moveColour].maximum++;
 
+    if (position.wpl != null) {
+      accuracies[moveColour].wplSum += position.wpl * 100;
+      accuracies[moveColour].wplCount++;
+    }
+
     classifications[moveColour][cls as keyof typeof classifications.white] += 1;
   }
 
   return {
     accuracies: {
-      white: (accuracies.white.current / accuracies.white.maximum) * 100,
-      black: (accuracies.black.current / accuracies.black.maximum) * 100,
+      white: continuousAccuracy(accuracies.white),
+      black: continuousAccuracy(accuracies.black),
     },
     classifications,
     positions: positions,
   };
 }
 
+/**
+ * Chess.com-style accuracy from average win probability lost (0..100 win-%
+ * points). Falls back to the legacy per-classification mean when no WPL data
+ * was recorded for the side.
+ */
+function continuousAccuracy(side: {
+  current: number;
+  maximum: number;
+  wplSum: number;
+  wplCount: number;
+}): number {
+  if (side.wplCount > 0) {
+    const avgWpl = side.wplSum / side.wplCount;
+    return Math.min(100, Math.max(0, 103.1668 * Math.exp(-0.04354 * avgWpl) - 3.1669));
+  }
+  return side.maximum > 0 ? (side.current / side.maximum) * 100 : 0;
+}
+
 // Cached dynamic import of the ECO openings book (loaded once per browser).
 let openingsDBPromise: Promise<any> | null = null;
-
 function getOpeningsDB() {
   if (!openingsDBPromise) {
     openingsDBPromise = import("@chess-openings/eco.json").then((mod) =>
