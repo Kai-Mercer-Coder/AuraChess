@@ -1,22 +1,19 @@
 /**
  * Space heatmap: fixed White perspective, no side flipping while navigating.
  * `white` = squares White attacks, `black` = squares Black attacks,
- * `contested` = the intersection. Own-occupied squares are excluded.
+ * `contested` = the intersection. Occupied squares are included — pieces
+ * sitting on controlled squares get highlighted too.
  * Basic v1: raw attack patterns, no pin refinement.
  */
 import { Chess, type Square } from "chess.js";
-import { FILES, ALL_SQUARES } from "./squares";
+import { ALL_SQUARES } from "./squares";
 import type { SpaceHeatmap } from "./types";
 
-/** Squares attacked by `by`, skipping squares occupied by their own pieces. */
+/** Every square attacked by `by`, including occupied ones. */
 function attackedSquares(game: Chess, by: "w" | "b"): Set<string> {
   const out = new Set<string>();
-  const board = game.board();
   for (const sq of ALL_SQUARES) {
     if (game.attackers(sq as Square, by).length === 0) continue;
-    // game.board() is ordered rank 8 → 1.
-    const occupant = board[8 - parseInt(sq[1], 10)][FILES.indexOf(sq[0])];
-    if (occupant && occupant.color === by) continue;
     out.add(sq);
   }
   return out;

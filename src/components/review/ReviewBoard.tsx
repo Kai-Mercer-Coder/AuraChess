@@ -27,7 +27,7 @@ interface ReviewBoardProps {
   lastMove: { from: Square; to: Square } | null;
   classification?: string;
   positionAnalysis?: PositionAnalysis | null;
-  /** Square → tint override from the heatmap panel (takes precedence). */
+  /** Square → tint from the heatmap panel; yields to the classification tint. */
   heatmap?: Record<string, string> | null;
   /** Show the hanging-piece ring (Undefended heatmap kind). Off by default. */
   showHanging?: boolean;
@@ -111,14 +111,22 @@ export function ReviewBoard({ fen, lastMove, classification, positionAnalysis, h
     return "#ef4444";
   }
 
-  const squareRenderer: SquareRenderer = ({ square, children }) => (
+  const squareRenderer: SquareRenderer = ({ square, children }) => {
+    const lastMoveStyle = lastMoveSquareStyles[square];
+    // The move-classification tint always wins; the heatmap only fills
+    // squares without one, so it never covers classification colors.
+    const heatStyle =
+      !lastMoveStyle && heatmap?.[square]
+        ? { backgroundColor: heatmap[square] }
+        : undefined;
+    return (
     <div
       style={{
         width: "100%",
         height: "100%",
         position: "relative",
-        // Heatmap tint wins over the last-move tint while the panel is open.
-        ...(heatmap?.[square] ? { backgroundColor: heatmap[square] } : lastMoveSquareStyles[square]),
+        ...lastMoveStyle,
+        ...heatStyle,
         boxShadow: showHanging && hangingSquares.includes(square as Square)
           ? "inset 0 0 0 2px rgba(239, 68, 68, 0.55)"
           : undefined,
@@ -161,7 +169,8 @@ export function ReviewBoard({ fen, lastMove, classification, positionAnalysis, h
         </>
       )}
     </div>
-  );
+    );
+  };
 
   return (
     <div className="relative w-full aspect-square rounded-2xl overflow-hidden bg-black/20 border border-white/[0.06]">
