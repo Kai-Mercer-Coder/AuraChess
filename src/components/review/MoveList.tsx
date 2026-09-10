@@ -7,6 +7,7 @@
  */
 "use client";
 
+import { motion, AnimatePresence } from "framer-motion";
 import type { EvaluatedPosition } from "@/lib/types/Position";
 import { classificationVisuals } from "@/components/review/classificationVisuals";
 
@@ -17,6 +18,8 @@ interface MoveListProps {
   onSelectMove: (index: number) => void;
   analysing?: boolean;
   analysedCount?: number;
+  open: boolean;
+  onToggle: () => void;
 }
 
 type GlyphState = "pending" | "done" | "active";
@@ -56,6 +59,8 @@ export function MoveList({
   onSelectMove,
   analysing,
   analysedCount,
+  open,
+  onToggle,
 }: MoveListProps) {
   // The move at ply index `i` is finished once the position after it has been
   // evaluated: analysedCount (positions evaluated, incl. the start) > i + 1.
@@ -91,61 +96,91 @@ export function MoveList({
   }
 
   return (
-    <div className="flex max-h-[420px] flex-col overflow-hidden rounded-2xl border border-white/[0.06] bg-white/[0.02]">
-      <div className="flex items-center justify-between border-b border-white/[0.04] px-4 py-2.5">
-        <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-white/30">
+    <div className="overflow-hidden rounded-2xl border border-white/[0.06] bg-white/[0.02]">
+      <button
+        type="button"
+        onClick={onToggle}
+        className="flex w-full items-center justify-between px-4 py-2.5 transition-colors hover:bg-white/[0.03]"
+      >
+        <span className="flex items-center gap-2 text-[12px] font-medium text-white/70">
+          <span className="material-symbols-outlined text-[16px] text-white/40">
+            list
+          </span>
           Moves
         </span>
-        <span className="text-[10px] tabular-nums text-white/30">
-          {Math.ceil(moves.length / 2)} moves
+        <span className="flex items-center gap-2">
+          <span className="text-[10px] tabular-nums text-white/30">
+            {Math.ceil(moves.length / 2)} moves
+          </span>
+          <span
+            className={`material-symbols-outlined text-[18px] text-white/30 transition-transform duration-300 ${
+              open ? "rotate-180" : ""
+            }`}
+          >
+            expand_more
+          </span>
         </span>
-      </div>
-      <div className="flex-1 space-y-px overflow-y-auto p-1.5 custom-scrollbar">
-        {movePairs.length === 0 ? (
-          <div className="py-10 text-center text-sm font-light text-white/25">
-            Analysing…
-          </div>
-        ) : (
-          movePairs.map((pair) => {
-            const active =
-              navIndex === pair.whiteIdx + 1 || navIndex === pair.blackIdx + 1;
-            return (
-              <div
-                key={pair.num}
-                className={`grid grid-cols-[2.75rem_1fr_1fr] items-center rounded-lg ${
-                  active ? "bg-white/[0.05]" : "transition-colors hover:bg-white/[0.02]"
-                }`}
-              >
-                <span className="pl-3 text-[10px] tabular-nums text-white/25">
-                  {pair.num}.
-                </span>
-                <button
-                  onClick={() => onSelectMove(pair.whiteIdx + 1)}
-                  className={`flex items-center gap-2 rounded-md px-1.5 py-1.5 text-left text-[12.5px] transition-colors ${
-                    navIndex === pair.whiteIdx + 1
-                      ? "font-medium text-white"
-                      : "text-white/50 hover:text-white/80"
-                  }`}
-                >
-                  <MoveGlyph cls={pair.whiteClass} state={plyState(pair.whiteIdx)} />
-                  {pair.white}
-                </button>
-                <button
-                  onClick={() => pair.black && onSelectMove(pair.blackIdx + 1)}
-                  className={`flex items-center gap-2 rounded-md px-1.5 py-1.5 text-left text-[12.5px] transition-colors ${
-                    navIndex === pair.blackIdx + 1
-                      ? "font-medium text-white"
-                      : "text-white/40 hover:text-white/75"
-                  }`}
-                >
-                  <MoveGlyph cls={pair.blackClass} state={plyState(pair.blackIdx)} />
-                  {pair.black || "—"}
-                </button>
-              </div>
-            );
-          })
+      </button>
+
+      <AnimatePresence initial={false}>
+        {open && (
+          <motion.div
+            key="content"
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.35, ease: [0.32, 0.72, 0, 1] }}
+            className="overflow-hidden"
+          >
+            <div className="max-h-[400px] space-y-px overflow-y-auto border-t border-white/[0.04] p-1.5 custom-scrollbar">
+              {movePairs.length === 0 ? (
+                <div className="py-10 text-center text-sm font-light text-white/25">
+                  Analysing…
+                </div>
+              ) : (
+                movePairs.map((pair) => {
+                  const active =
+                    navIndex === pair.whiteIdx + 1 || navIndex === pair.blackIdx + 1;
+                  return (
+                    <div
+                      key={pair.num}
+                      className={`grid grid-cols-[2.75rem_1fr_1fr] items-center rounded-lg ${
+                        active ? "bg-white/[0.05]" : "transition-colors hover:bg-white/[0.02]"
+                      }`}
+                    >
+                      <span className="pl-3 text-[10px] tabular-nums text-white/25">
+                        {pair.num}.
+                      </span>
+                      <button
+                        onClick={() => onSelectMove(pair.whiteIdx + 1)}
+                        className={`flex items-center gap-2 rounded-md px-1.5 py-1.5 text-left text-[12.5px] transition-colors ${
+                          navIndex === pair.whiteIdx + 1
+                            ? "font-medium text-white"
+                            : "text-white/50 hover:text-white/80"
+                        }`}
+                      >
+                        <MoveGlyph cls={pair.whiteClass} state={plyState(pair.whiteIdx)} />
+                        {pair.white}
+                      </button>
+                      <button
+                        onClick={() => pair.black && onSelectMove(pair.blackIdx + 1)}
+                        className={`flex items-center gap-2 rounded-md px-1.5 py-1.5 text-left text-[12.5px] transition-colors ${
+                          navIndex === pair.blackIdx + 1
+                            ? "font-medium text-white"
+                            : "text-white/40 hover:text-white/75"
+                        }`}
+                      >
+                        <MoveGlyph cls={pair.blackClass} state={plyState(pair.blackIdx)} />
+                        {pair.black || "—"}
+                      </button>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          </motion.div>
         )}
-      </div>
+      </AnimatePresence>
     </div>
   );
 }

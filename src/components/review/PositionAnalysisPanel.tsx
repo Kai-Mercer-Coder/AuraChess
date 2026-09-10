@@ -8,7 +8,7 @@
  */
 "use client";
 
-import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import type {
   PositionAnalysis,
   KingSideAnalysis,
@@ -16,11 +16,11 @@ import type {
 
 interface PositionAnalysisPanelProps {
   positionAnalysis?: PositionAnalysis | null;
+  open: boolean;
+  onToggle: () => void;
 }
 
-export function PositionAnalysisPanel({ positionAnalysis }: PositionAnalysisPanelProps) {
-  const [open, setOpen] = useState(false);
-
+export function PositionAnalysisPanel({ positionAnalysis, open, onToggle }: PositionAnalysisPanelProps) {
   if (!positionAnalysis?.explanation) return null;
 
   const blob = positionAnalysis.explanation;
@@ -34,8 +34,8 @@ export function PositionAnalysisPanel({ positionAnalysis }: PositionAnalysisPane
     <div className="overflow-hidden rounded-2xl border border-white/[0.06] bg-white/[0.02] fade-up">
       <button
         type="button"
-        onClick={() => setOpen((o) => !o)}
-        className="flex w-full items-center justify-between px-4 py-3 transition-colors hover:bg-white/[0.03]"
+        onClick={onToggle}
+        className="flex w-full items-center justify-between px-4 py-2.5 transition-colors hover:bg-white/[0.03]"
       >
         <span className="flex items-center gap-2 text-[12px] font-medium text-white/70">
           <span className="material-symbols-outlined text-[16px] text-white/40">
@@ -52,10 +52,19 @@ export function PositionAnalysisPanel({ positionAnalysis }: PositionAnalysisPane
         </span>
       </button>
 
-      {open && (
-        <div className="px-4 pb-4">
-          {/* Verdict */}
-          <div className="flex items-start justify-between gap-4 border-t border-white/[0.04] py-3">
+      <AnimatePresence initial={false}>
+        {open && (
+          <motion.div
+            key="content"
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.35, ease: [0.32, 0.72, 0, 1] }}
+            className="overflow-hidden"
+          >
+            <div className="px-4 pb-4">
+              {/* Verdict */}
+              <div className="flex items-start justify-between gap-4 border-t border-white/[0.04] py-3">
             <div className="min-w-0">
               <div className="text-[9.5px] font-semibold uppercase tracking-[0.18em] text-white/30">
                 {blob.phase} · {blob.side_to_move} to move
@@ -176,8 +185,10 @@ export function PositionAnalysisPanel({ positionAnalysis }: PositionAnalysisPane
               )}
             </div>
           ) : null}
-        </div>
-      )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

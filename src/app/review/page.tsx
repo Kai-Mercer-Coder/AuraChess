@@ -26,6 +26,8 @@ export default function ReviewPage() {
   const [moves, setMoves] = useState<string[]>([]);
   const [navIndex, setNavIndex] = useState(0);
   const [started, setStarted] = useState(false);
+  // Accordion: at most one of the two side panels is open at a time.
+  const [openPanel, setOpenPanel] = useState<"moves" | "analysis" | null>("moves");
 
   const { report, loading, progress, total, analysisPass, completedMoves, runReview, reset } =
     useGameReview();
@@ -156,8 +158,14 @@ export default function ReviewPage() {
                   onSelectMove={setNavIndex}
                   analysing={loading}
                   analysedCount={completedMoves}
+                  open={openPanel === "moves"}
+                  onToggle={() => setOpenPanel((p) => (p === "moves" ? null : "moves"))}
                 />
-                <PositionAnalysisPanel positionAnalysis={currentPositionAnalysis} />
+                <PositionAnalysisPanel
+                  positionAnalysis={currentPositionAnalysis}
+                  open={openPanel === "analysis"}
+                  onToggle={() => setOpenPanel((p) => (p === "analysis" ? null : "analysis"))}
+                />
                 <ClassificationLegend />
               </div>
             </div>
