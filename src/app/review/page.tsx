@@ -21,9 +21,12 @@ import { ReviewNavigation } from "@/components/review/ReviewNavigation";
 import { PositionAnalysisPanel } from "@/components/review/PositionAnalysisPanel";
 import { HeatmapPanel } from "@/components/review/HeatmapPanel";
 import {
-  computeHeatmap,
-  buildHeatmapOverlay,
-  type HeatmapMode,
+  computeSpaceHeatmap,
+  computeKingHeatmap,
+  buildZoneOverlay,
+  type HeatmapKind,
+  type SpaceMode,
+  type KingMode,
 } from "@/lib/chess/heatmap";
 
 export default function ReviewPage() {
@@ -33,7 +36,9 @@ export default function ReviewPage() {
   const [started, setStarted] = useState(false);
   // Accordion: at most one of the side panels is open at a time.
   const [openPanel, setOpenPanel] = useState<"moves" | "analysis" | "heatmap" | null>("moves");
-  const [heatmapMode, setHeatmapMode] = useState<HeatmapMode>("all");
+  const [heatmapKind, setHeatmapKind] = useState<HeatmapKind>("space");
+  const [spaceMode, setSpaceMode] = useState<SpaceMode>("all");
+  const [kingMode, setKingMode] = useState<KingMode>("theoretical");
 
   const { report, loading, progress, total, analysisPass, completedMoves, runReview, reset } =
     useGameReview();
@@ -80,16 +85,26 @@ export default function ReviewPage() {
       ? positions[Math.min(navIndex, positions.length - 1)]?.topLines?.[0]?.evaluation
       : undefined;
 
-  // Heatmap reachability for the displayed position; the board overlay is
-  // only live while the heatmap panel is open.
-  const heatmapData = useMemo(
-    () => computeHeatmap(boardState.fen),
+  // Heatmap geometry for the displayed position. The board overlay (tints)
+  // is only live while the heatmap panel is open; the Undefended kind uses
+  // the piece ring instead (see showHanging).
+  const spaceData = useMemo(
+    () => computeSpaceHeatmap(boardState.fen),
     [boardState.fen],
   );
-  const heatmapOverlay = useMemo(
-    () => (openPanel === "heatmap" ? buildHeatmapOverlay(heatmapData, heatmapMode) : null),
-    [openPanel, heatmapData, heatmapMode],
+  const kingData = useMemo(
+    () => computeKingHeatmap(boardState.fen, kingMode),
+    [boardState.fen, kingMode],
   );
+  const heatmapOverlay = useMemo(() => {
+    if (openPanel !== "heatmap") return null;
+    if (heatmapKind === "space")
+      return buildZoneOverlay(spaceData.white, spaceData.black, spaceMode);
+    if (heatmapKind === "king")
+      return buildZoneOverlay(kingData.white, kingData.black, "all");
+    return null;
+  }, [openPanel, heatmapKind, spaceData, kingData, spaceMode]);
+  const showHanging = openPanel === "heatmap" && heatmapKind === "undefended";
 
   const handleResetBtn = () => {
     reset();
@@ -152,6 +167,7 @@ export default function ReviewPage() {
                       classification={currentClassification}
                       positionAnalysis={currentPositionAnalysis}
                       heatmap={heatmapOverlay}
+                      showHanging={showHanging}
                     />
                   </div>
                 </div>
@@ -185,9 +201,16 @@ export default function ReviewPage() {
                   onToggle={() => setOpenPanel((p) => (p === "analysis" ? null : "analysis"))}
                 />
                 <HeatmapPanel
-                  data={heatmapData}
-                  mode={heatmapMode}
-                  onModeChange={setHeatmapMode}
+                  kind={heatmapKind}
+                  onKindChange={setHeatmapKind}
+                  space={spaceData}
+                  spaceMode={spaceMode}
+                  onSpaceModeChange={setSpaceMode}
+                  king={kingData}
+                  kingMode={kingMode}
+                  onKingModeChange={setKingMode}
+                  hangingWhite={currentPositionAnalysis?.hangingWhite ?? []}
+                  hangingBlack={currentPositionAnalysis?.hangingBlack ?? []}
                   open={openPanel === "heatmap"}
                   onToggle={() => setOpenPanel((p) => (p === "heatmap" ? null : "heatmap"))}
                 />

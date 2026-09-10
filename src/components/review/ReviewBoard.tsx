@@ -7,7 +7,8 @@
  *  - stamps the classification badge on the destination square — prefers the
  *    dedicated PNG asset in `/badges`, falls back to a colored dot for
  *    classifications that ship no asset.
- *  - highlights hanging pieces (from the Rust analyzer) with a red inset ring
+ *  - highlights hanging pieces (from the Rust analyzer) with a red inset
+ *    ring, only while the Undefended heatmap kind is active
  *  - overlays a king-safety indicator on each king when analysis data exists
  */
 "use client";
@@ -28,6 +29,8 @@ interface ReviewBoardProps {
   positionAnalysis?: PositionAnalysis | null;
   /** Square → tint override from the heatmap panel (takes precedence). */
   heatmap?: Record<string, string> | null;
+  /** Show the hanging-piece ring (Undefended heatmap kind). Off by default. */
+  showHanging?: boolean;
 }
 
 /** Hex → `rgba()` string so tints can reuse badge colors at reduced alpha. */
@@ -53,7 +56,7 @@ const badgeImages: Record<string, string> = {
   onlyMove: "/badges/onlyMove.png",
 };
 
-export function ReviewBoard({ fen, lastMove, classification, positionAnalysis, heatmap }: ReviewBoardProps) {
+export function ReviewBoard({ fen, lastMove, classification, positionAnalysis, heatmap, showHanging }: ReviewBoardProps) {
   const badgeSquare = lastMove && classification ? lastMove.to : null;
 
   // Hanging squares discovered by the Rust analyzer → red inset ring.
@@ -116,7 +119,7 @@ export function ReviewBoard({ fen, lastMove, classification, positionAnalysis, h
         position: "relative",
         // Heatmap tint wins over the last-move tint while the panel is open.
         ...(heatmap?.[square] ? { backgroundColor: heatmap[square] } : lastMoveSquareStyles[square]),
-        boxShadow: hangingSquares.includes(square as Square)
+        boxShadow: showHanging && hangingSquares.includes(square as Square)
           ? "inset 0 0 0 2px rgba(239, 68, 68, 0.55)"
           : undefined,
       }}
