@@ -21,12 +21,12 @@ interface HeatmapPanelProps {
 
 const MODES: { key: HeatmapMode; label: string }[] = [
   { key: "all", label: "All" },
-  { key: "ours", label: "Ours" },
-  { key: "theirs", label: "Theirs" },
+  { key: "white", label: "White" },
+  { key: "black", label: "Black" },
 ];
 
 export function HeatmapPanel({ data, mode, onModeChange, open, onToggle }: HeatmapPanelProps) {
-  const sideLabel = data.side === "white" ? "White" : "Black";
+  const turnLabel = data.turn === "white" ? "White to move" : "Black to move";
 
   return (
     <div className="overflow-hidden rounded-2xl border border-white/[0.06] bg-white/[0.02] fade-up">
@@ -62,7 +62,7 @@ export function HeatmapPanel({ data, mode, onModeChange, open, onToggle }: Heatm
           >
             <div className="space-y-3 border-t border-white/[0.04] px-4 py-3">
               <div className="text-[9.5px] font-semibold uppercase tracking-[0.18em] text-white/30">
-                {sideLabel} to move
+                {turnLabel} · White perspective
               </div>
 
               {/* Mode selector */}
@@ -85,8 +85,8 @@ export function HeatmapPanel({ data, mode, onModeChange, open, onToggle }: Heatm
 
               {/* Zone legend with live counts */}
               <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5">
-                <LegendDot color="#34d399" label={`Ours · ${data.ours.length}`} />
-                <LegendDot color="#ef4444" label={`Theirs · ${data.theirs.length}`} />
+                <LegendDot color="#34d399" label={`White · ${data.white.length}`} />
+                <LegendDot color="#ef4444" label={`Black · ${data.black.length}`} />
                 <LegendDot color="#a855f7" label={`Contested · ${data.contested.length}`} />
               </div>
             </div>

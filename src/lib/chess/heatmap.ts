@@ -1,77 +1,86 @@
 /**
  * Board heatmap computation.
  *
- * For the displayed position, collects every square the side to move can
- * travel to ("ours") and every square the opponent can travel to ("theirs",
- * via a turn-swapped FEN so chess.js generates their legal moves). Squares in
- * both sets are "contested". Basic v1: reachability only, no pin/attack
- * refinement.
+ * Fixed White perspective (no side flipping while navigating): `white` is
+ * every square White attacks, `black` every square Black attacks, `contested`
+ * the intersection. Own-occupied squares are excluded — pieces can't travel
+ * onto them, so they aren't "in reach". Basic v1: raw attack patterns, no
+ * pin refinement.
  */
-import { Chess } from "chess.js";
+import { Chess, type Square } from "chess.js";
 
-export type HeatmapMode = "all" | "ours" | "theirs";
+export type HeatmapMode = "all" | "white" | "black";
 
 export interface HeatmapData {
-  ours: string[];
-  theirs: string[];
+  white: string[];
+  black: string[];
   contested: string[];
-  side: "white" | "black";
+  turn: "white" | "black";
 }
 
 /** Fill colors per zone (tints, so pieces stay readable underneath). */
 export const HEATMAP_COLORS = {
-  ours: "rgba(52, 211, 153, 0.28)",
-  theirs: "rgba(239, 68, 68, 0.30)",
+  white: "rgba(52, 211, 153, 0.28)",
+  black: "rgba(239, 68, 68, 0.30)",
   contested: "rgba(168, 85, 247, 0.34)",
 } as const;
 
+const FILES = "abcdefgh";
+const ALL_SQUARES: string[] = [];
+for (let rank = 1; rank <= 8; rank++) {
+  for (const file of FILES) ALL_SQUARES.push(`${file}${rank}`);
+}
+
+/** Squares attacked by `by`, skipping squares occupied by their own pieces. */
+function attackedSquares(game: Chess, by: "w" | "b"): Set<string> {
+  const out = new Set<string>();
+  const board = game.board();
+  for (const sq of ALL_SQUARES) {
+    if (game.attackers(sq as Square, by).length === 0) continue;
+    // game.board() is ordered rank 8 → 1.
+    const occupant = board[8 - parseInt(sq[1], 10)][FILES.indexOf(sq[0])];
+    if (occupant && occupant.color === by) continue;
+    out.add(sq);
+  }
+  return out;
+}
+
 export function computeHeatmap(fen: string): HeatmapData {
   const game = new Chess(fen);
-  const side = game.turn() === "w" ? "white" : "black";
-  const ours = new Set(game.moves({ verbose: true }).map((m) => m.to));
-
-  // Opponent reachability: same position with the turn flipped.
-  const theirs = new Set<string>();
-  try {
-    const parts = fen.split(" ");
-    parts[1] = parts[1] === "w" ? "b" : "w";
-    const opp = new Chess(parts.join(" "));
-    for (const m of opp.moves({ verbose: true })) theirs.add(m.to);
-  } catch {
-    // Flipped FEN unusable (shouldn't happen) — theirs stays empty.
-  }
-
-  const contested = [...ours].filter((sq) => theirs.has(sq));
-  return { ours: [...ours], theirs: [...theirs], contested, side };
+  const turn = game.turn() === "w" ? "white" : "black";
+  const white = attackedSquares(game, "w");
+  const black = attackedSquares(game, "b");
+  const contested = [...white].filter((sq) => black.has(sq));
+  return { white: [...white], black: [...black], contested, turn };
 }
 
 /**
  * Reduce heatmap data + mode to a square → background-color map for the
- * board renderer. `all`: ours-only emerald, theirs-only red, contested
- * purple. `ours`/`theirs`: single-zone view of that side's reach.
+ * board renderer. `all`: white-only emerald, black-only red, contested
+ * purple. `white`/`black`: single-zone view of that side's reach.
  */
 export function buildHeatmapOverlay(
   data: HeatmapData,
   mode: HeatmapMode,
 ): Record<string, string> {
   const out: Record<string, string> = {};
-  const theirsSet = new Set(data.theirs);
-  const oursSet = new Set(data.ours);
+  const blackSet = new Set(data.black);
+  const whiteSet = new Set(data.white);
 
-  if (mode === "ours" || mode === "all") {
-    for (const sq of data.ours) {
+  if (mode === "white" || mode === "all") {
+    for (const sq of data.white) {
       out[sq] =
-        mode === "all" && theirsSet.has(sq)
+        mode === "all" && blackSet.has(sq)
           ? HEATMAP_COLORS.contested
-          : HEATMAP_COLORS.ours;
+          : HEATMAP_COLORS.white;
     }
   }
-  if (mode === "theirs" || mode === "all") {
-    for (const sq of data.theirs) {
-      if (mode === "all" && oursSet.has(sq)) {
+  if (mode === "black" || mode === "all") {
+    for (const sq of data.black) {
+      if (mode === "all" && whiteSet.has(sq)) {
         out[sq] = HEATMAP_COLORS.contested;
       } else if (!(sq in out)) {
-        out[sq] = HEATMAP_COLORS.theirs;
+        out[sq] = HEATMAP_COLORS.black;
       }
     }
   }
