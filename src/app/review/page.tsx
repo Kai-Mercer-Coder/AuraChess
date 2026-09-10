@@ -38,7 +38,7 @@ export default function ReviewPage() {
       setMoves(g.history());
       setNavIndex(0);
       setStarted(true);
-      await runReview(pgn.trim(), { maxPasses: 2 });
+      await runReview(pgn.trim(), { maxPasses: 3 });
     } catch {
       alert("Invalid PGN. Please check the moves.");
     }

@@ -12,7 +12,7 @@ interface ReviewProgressProps {
 
 export function ReviewProgress({ progress, total, analysisPass }: ReviewProgressProps) {
   const pct = total > 0 ? Math.min(100, (progress / total) * 100) : 0;
-  const depth = analysisPass ? 13 + (analysisPass - 1) * 2 : 13;
+  const depth = analysisPass ? 12 + analysisPass * 2 : 14;
   return (
     <div className="mb-6 fade-up">
       <div className="mb-2 flex items-center justify-between">

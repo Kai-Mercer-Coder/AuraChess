@@ -86,14 +86,14 @@ export function useGameReview(): UseGameReviewReturn {
         // One engine for the whole depth-13 sweep — spawning a worker per
         // position was the dominant overhead of this pass.
         engine = new LocalStockfishEvalEngine();
-        const startEval = await evaluateFenToDepth(startGame.fen(), 13, engine);
+        const startEval = await evaluateFenToDepth(startGame.fen(), 14, engine);
         const startEvalCp = Math.round(startEval.eval * 100);
         const startMate = startEval.mate;
         positions.push({
           fen: startGame.fen(),
           move: { san: "", uci: "" },
           topLines: [{
-            id: 1, depth: 13,
+            id: 1, depth: 14,
             evaluation: { type: startMate !== null ? "mate" : "cp", value: startMate ?? startEvalCp },
             moveUCI: startEval.bestmove, moveSAN: startEval.san
           }],
@@ -127,13 +127,13 @@ export function useGameReview(): UseGameReviewReturn {
         const currentFen = replay.fen();
 
         try {
-          const evalData = await evaluateFenToDepth(currentFen, 13, engine);
+          const evalData = await evaluateFenToDepth(currentFen, 14, engine);
           const evalCp = Math.round(evalData.eval * 100);
           positions.push({
             fen: currentFen,
             move: { san: allMoves[i].san, uci: allMoves[i].from + allMoves[i].to },
             topLines: [{
-              id: 1, depth: 13,
+              id: 1, depth: 14,
               evaluation: { type: evalData.mate !== null ? "mate" : "cp", value: evalData.mate ?? evalCp },
               moveUCI: evalData.bestmove, moveSAN: evalData.san,
               continuation: evalData.continuationArr || []
@@ -167,8 +167,6 @@ export function useGameReview(): UseGameReviewReturn {
 
       if (abortRef.current) return;
 
-      toast.success("Depth 13 analysis complete", { autoClose: 1500 });
-
       if (maxPasses >= 2) {
         runPass2(pgn, positions, options);
       } else {
@@ -196,7 +194,7 @@ export function useGameReview(): UseGameReviewReturn {
         if (abortRef.current) return;
 
         const pos = updated[i];
-        const result = await engine.evaluateToDepth(pos.fen, 15);
+        const result = await engine.evaluateToDepth(pos.fen, 16);
         if (result.depth === 0) continue;
 
         const evalCp = Math.round(result.eval * 100);
@@ -206,7 +204,7 @@ export function useGameReview(): UseGameReviewReturn {
         updated[i] = {
           ...pos,
           topLines: [{
-            id: 1, depth: 15,
+            id: 1, depth: 16,
             evaluation: { type: result.mate !== null ? "mate" : "cp", value: result.mate ?? evalCp },
             moveUCI: result.bestmove,
             moveSAN: "",
@@ -235,9 +233,7 @@ export function useGameReview(): UseGameReviewReturn {
 
       if (!abortRef.current) {
         if (changedCount > 0) {
-          toast.info(`Depth 15: ${changedCount} classification${changedCount > 1 ? "s" : ""} updated`, { autoClose: 2000 });
-        } else {
-          toast.success("Depth 15 analysis complete", { autoClose: 1500 });
+          toast.info(`Depth 16: ${changedCount} classification${changedCount > 1 ? "s" : ""} updated`, { autoClose: 2000 });
         }
         if (maxPasses >= 3) {
           runPass3(pgn, updated, options);
@@ -304,7 +300,6 @@ export function useGameReview(): UseGameReviewReturn {
         if (changedCount > 0) {
           toast.info(`Final: ${changedCount} classification${changedCount > 1 ? "s" : ""} updated`, { autoClose: 2000 });
         }
-        toast.success("Analysis complete", { autoClose: 1500 });
         setAnalysisPass(0);
         setLoading(false);
         options?.onDone?.(newResult);
