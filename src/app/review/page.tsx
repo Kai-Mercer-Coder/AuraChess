@@ -19,7 +19,7 @@ import { AccuracyCards } from "@/components/review/AccuracyCards";
 import { MoveList } from "@/components/review/MoveList";
 import { ReviewNavigation } from "@/components/review/ReviewNavigation";
 import { PositionAnalysisPanel } from "@/components/review/PositionAnalysisPanel";
-import { HeatmapPanel } from "@/components/review/HeatmapPanel";
+import { HeatmapPanel } from "@/components/review/heatmap/HeatmapPanel";
 import {
   computeSpaceHeatmap,
   computeKingHeatmap,
