@@ -43,8 +43,8 @@ Rxa8 Kxa8 48. Kxf5 1-0`,
   {
     id: "anderssen-morphy-1858",
     event: "Anderssen vs Morphy · Paris 1858",
-    white: "Paul Morphy",
-    black: "Adolf Anderssen",
+    white: "Adolf Anderssen",
+    black: "Paul Morphy",
     result: "0-1",
     pgn: `[Event "Anderssen - Morphy"]
 [Site "Paris FRA"]
@@ -52,8 +52,8 @@ Rxa8 Kxa8 48. Kxf5 1-0`,
 [EventDate "1858.12.20"]
 [Round "1"]
 [Result "0-1"]
-[White "Paul Morphy"]
-[Black "Adolf Anderssen"]
+[White "Adolf Anderssen"]
+[Black "Paul Morphy"]
 [ECO "C52"]
 [WhiteElo "?"]
 [BlackElo "?"]

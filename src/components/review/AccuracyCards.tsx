@@ -9,6 +9,7 @@ import {
   accuracyBarColor,
   accuracyColor,
 } from "@/components/review/classificationVisuals";
+import { ClassificationBreakdown } from "@/components/review/ClassificationBreakdown";
 
 interface AccuracyCardsProps {
   report: Report;
@@ -66,6 +67,7 @@ export function AccuracyCards({ report }: AccuracyCardsProps) {
         <PlayerRow side="white" accuracy={report.accuracies.white} />
         <PlayerRow side="black" accuracy={report.accuracies.black} />
       </div>
+      <ClassificationBreakdown report={report} />
     </div>
   );
 }
