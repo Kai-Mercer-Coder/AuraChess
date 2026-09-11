@@ -23,8 +23,10 @@ import { ReviewProgress } from "@/components/review/ReviewProgress";
 import { AccuracyCards } from "@/components/review/AccuracyCards";
 import { MoveList } from "@/components/review/MoveList";
 import { ReviewNavigation } from "@/components/review/ReviewNavigation";
+import { CoachCard } from "@/components/review/CoachCard";
 import { PositionAnalysisPanel } from "@/components/review/PositionAnalysisPanel";
 import { HeatmapPanel } from "@/components/review/heatmap/HeatmapPanel";
+import { getCoachMessages } from "@/lib/chess/coach";
 import {
   computeSpaceHeatmap,
   computeKingHeatmap,
@@ -119,6 +121,12 @@ export default function ReviewPage() {
   }, [openPanel, heatmapKind, spaceData, kingData, spaceMode]);
   const showHanging = openPanel === "heatmap" && heatmapKind === "undefended";
 
+  // Coach tips for the displayed position; refresh as you step through moves.
+  const coachMessages = useMemo(() => {
+    if (positions.length === 0) return [];
+    return getCoachMessages(positions[Math.min(navIndex, positions.length - 1)]);
+  }, [positions, navIndex]);
+
   const handleResetBtn = () => {
     reset();
     setStarted(false);
@@ -196,6 +204,7 @@ export default function ReviewPage() {
                   onPrevious={() => setNavIndex((n) => Math.max(0, n - 1))}
                   onNext={() => setNavIndex((n) => Math.min(moves.length, n + 1))}
                 />
+                <CoachCard messages={coachMessages} />
               </div>
 
               {/* Right panel */}
