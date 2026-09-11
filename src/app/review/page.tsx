@@ -8,10 +8,15 @@
  */
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Chess, type Square } from "chess.js";
 import { useGameReview } from "@/lib/hooks/useGameReview";
 import { PgnForm } from "@/components/review/PgnForm";
+import {
+  SAMPLE_GAMES,
+  pickRandomSamples,
+  type SampleGame,
+} from "@/lib/chess/sampleGames";
 import { ReviewBoard } from "@/components/review/ReviewBoard";
 import { EvalBar } from "@/components/review/EvalBar";
 import { ReviewProgress } from "@/components/review/ReviewProgress";
@@ -39,6 +44,14 @@ export default function ReviewPage() {
   const [heatmapKind, setHeatmapKind] = useState<HeatmapKind>("space");
   const [spaceMode, setSpaceMode] = useState<SpaceMode>("all");
   const [kingMode, setKingMode] = useState<KingMode>("theoretical");
+  // Landing samples: deterministic first paint (SSR-safe), then 2 random.
+  const [samplePicks, setSamplePicks] = useState<SampleGame[]>(() =>
+    SAMPLE_GAMES.slice(0, 2),
+  );
+
+  useEffect(() => {
+    setSamplePicks(pickRandomSamples(2));
+  }, []);
 
   const { report, loading, progress, total, analysisPass, completedMoves, runReview, reset } =
     useGameReview();
@@ -144,6 +157,9 @@ export default function ReviewPage() {
             onChange={setPgn}
             onAnalyse={handleAnalyse}
             loading={loading}
+            samples={samplePicks}
+            onPickSample={setPgn}
+            onShuffleSamples={() => setSamplePicks(pickRandomSamples(2))}
           />
         ) : (
           <div className="pt-8">

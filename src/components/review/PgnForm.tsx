@@ -6,14 +6,27 @@
  */
 "use client";
 
+import type { SampleGame } from "@/lib/chess/sampleGames";
+
 interface PgnFormProps {
   value: string;
   onChange: (value: string) => void;
   onAnalyse: () => void;
   loading: boolean;
+  samples: SampleGame[];
+  onPickSample: (pgn: string) => void;
+  onShuffleSamples: () => void;
 }
 
-export function PgnForm({ value, onChange, onAnalyse, loading }: PgnFormProps) {
+export function PgnForm({
+  value,
+  onChange,
+  onAnalyse,
+  loading,
+  samples,
+  onPickSample,
+  onShuffleSamples,
+}: PgnFormProps) {
   return (
     <div className="relative mx-auto max-w-xl px-6 pb-16 pt-24 text-center">
       {/* Soft aura behind the hero. */}
@@ -58,6 +71,45 @@ export function PgnForm({ value, onChange, onAnalyse, loading }: PgnFormProps) {
         <p className="pt-3 text-center text-[10px] font-light tracking-wide text-white/25">
           Free · No account · Runs on local Stockfish
         </p>
+      </div>
+
+      {/* Sample games: 2 random picks, reshufflable */}
+      <div className="mt-6 text-left fade-up">
+        <div className="flex items-center justify-between pb-2">
+          <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-white/30">
+            Or try a sample game
+          </span>
+          <button
+            type="button"
+            onClick={onShuffleSamples}
+            title="Show different samples"
+            className="flex h-7 w-7 items-center justify-center rounded-full text-white/40 transition-all hover:bg-white/[0.06] hover:text-white active:scale-95"
+          >
+            <span className="material-symbols-outlined text-[16px]">shuffle</span>
+          </button>
+        </div>
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+          {samples.map((s) => (
+            <button
+              key={s.id}
+              type="button"
+              onClick={() => onPickSample(s.pgn)}
+              className="rounded-xl border border-white/[0.07] bg-white/[0.02] p-3 text-left transition-all hover:bg-white/[0.05] active:scale-[0.98]"
+            >
+              <div className="truncate text-[9.5px] font-semibold uppercase tracking-[0.16em] text-white/30">
+                {s.event}
+              </div>
+              <div className="mt-1 truncate text-[12.5px] font-medium text-white/80">
+                {s.white} <span className="font-light text-white/25">vs</span> {s.black}
+              </div>
+              <div className="mt-1.5">
+                <span className="rounded-full border border-white/10 px-2 py-0.5 text-[10px] font-semibold tabular-nums text-white/50">
+                  {s.result}
+                </span>
+              </div>
+            </button>
+          ))}
+        </div>
       </div>
     </div>
   );
