@@ -26,7 +26,7 @@ import { ReviewNavigation } from "@/components/review/ReviewNavigation";
 import { CoachCard } from "@/components/review/CoachCard";
 import { PositionAnalysisPanel } from "@/components/review/PositionAnalysisPanel";
 import { HeatmapPanel } from "@/components/review/heatmap/HeatmapPanel";
-import { getCoachMessages } from "@/lib/chess/coach";
+import { getCoachMessage } from "@/lib/chess/coach";
 import {
   computeSpaceHeatmap,
   computeKingHeatmap,
@@ -50,6 +50,8 @@ export default function ReviewPage() {
   const [samplePicks, setSamplePicks] = useState<SampleGame[]>(() =>
     SAMPLE_GAMES.slice(0, 2),
   );
+  // Coach picks roll once per analysed game so a move's tip stays stable.
+  const [coachSeed, setCoachSeed] = useState(0);
 
   useEffect(() => {
     setSamplePicks(pickRandomSamples(2));
@@ -66,6 +68,7 @@ export default function ReviewPage() {
       setMoves(g.history());
       setNavIndex(0);
       setStarted(true);
+      setCoachSeed(Math.floor(Math.random() * 1_000_000));
       await runReview(pgn.trim(), { maxPasses: 3 });
     } catch {
       alert("Invalid PGN. Please check the moves.");
@@ -121,11 +124,17 @@ export default function ReviewPage() {
   }, [openPanel, heatmapKind, spaceData, kingData, spaceMode]);
   const showHanging = openPanel === "heatmap" && heatmapKind === "undefended";
 
-  // Coach tips for the displayed position; refresh as you step through moves.
+  // Coach tip for the displayed move; refresh as you step through moves.
   const coachMessages = useMemo(() => {
-    if (positions.length === 0) return [];
-    return getCoachMessages(positions[Math.min(navIndex, positions.length - 1)]);
-  }, [positions, navIndex]);
+    if (positions.length === 0 || navIndex === 0) return [];
+    const idx = Math.min(navIndex, positions.length - 1);
+    const message = getCoachMessage(positions[idx], positions[idx - 1], {
+      seed: coachSeed,
+      moveNo: idx,
+      maxMove: moves.length,
+    });
+    return message ? [message] : [];
+  }, [positions, navIndex, coachSeed, moves.length]);
 
   const handleResetBtn = () => {
     reset();
